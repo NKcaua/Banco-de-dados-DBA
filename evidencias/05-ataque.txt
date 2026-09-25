@@ -1,0 +1,190 @@
+O uso do paginador está desativado.
+Agora você está conectado ao banco de dados "movimentador_contas" como usuário "postgres".
+SET
+SET
+
+========== T01 intruso le contas.contas (esperado: 42501) ==========
+RESET
+SET
+ usuario_da_tentativa 
+----------------------
+ usr_intruso
+(1 linha)
+
+psql:scripts/05attacksimulation.sql:25: ERRO:  42501: permissão negada para esquema contas
+LINHA 1: SELECT numero, titular_cpf FROM contas.contas;
+                                         ^
+
+========== T02 intruso le a view LGPD (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:31: ERRO:  42501: permissão negada para esquema lgpd
+LINHA 1: SELECT numero, cpf_mascarado FROM lgpd.vw_contas_mascaradas;
+                                           ^
+
+========== T03 operador le apenas numero e status (esperado: sucesso) ==========
+RESET
+SET
+ usuario_da_tentativa 
+----------------------
+ usr_operador
+(1 linha)
+
+  numero  |   status    
+----------+-------------
+ 100100-1 | EM_TRANSITO
+ 100200-7 | RECEBIDA
+ 100300-4 | EM_TRANSITO
+ 100400-2 | RECEBIDA
+ 100500-9 | BLOQUEADA
+ 100600-5 | EM_TRANSITO
+(6 linhas)
+
+
+========== T04 operador le CPF, e-mail e saldo (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:44: ERRO:  42501: permissão negada para tabela contas
+
+========== T05 operador le CPF e e-mail do colaborador (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:50: ERRO:  42501: permissão negada para tabela colaboradores
+
+========== T06 operador faz SELECT * em contas (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:56: ERRO:  42501: permissão negada para tabela contas
+
+========== T07 operador apaga historico (esperado: 42501, sem DELETE) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:62: ERRO:  42501: permissão negada para tabela movimentacoes
+
+========== T08 operador esvazia historico com TRUNCATE (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:68: ERRO:  42501: permissão negada para tabela movimentacoes
+
+========== T09 atendimento le a tabela base (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:74: ERRO:  42501: permissão negada para esquema contas
+LINHA 1: SELECT numero, titular_cpf, saldo FROM contas.contas;
+                                                ^
+
+========== T10 atendimento altera status (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:80: ERRO:  42501: permissão negada para esquema contas
+LINHA 1: UPDATE contas.contas SET status = 'ENCERRADA' WHERE numero =...
+                ^
+
+========== T11 atendimento consulta a view mascarada (esperado: sucesso, sem saldo e sem CPF integral) ==========
+RESET
+SET
+  numero  |  titular  | cpf_mascarado  |   email_mascarado    |    setor_atual    |   status    
+----------+-----------+----------------+----------------------+-------------------+-------------
+ 100100-1 | Helena P. | 456.***.***-64 | h***@exemplo.invalid | Operacoes         | EM_TRANSITO
+ 100200-7 | Igor S.   | 321.***.***-91 | i***@exemplo.invalid | Tesouraria        | RECEBIDA
+ 100300-4 | Julia F.  | 987.***.***-00 | j***@exemplo.invalid | Compliance        | EM_TRANSITO
+ 100400-2 | Laura P.  | 135.***.***-28 | l***@exemplo.invalid | Contas a Receber  | RECEBIDA
+ 100500-9 | Marcos T. | 246.***.***-28 | m***@exemplo.invalid | Compliance        | BLOQUEADA
+ 100600-5 | Nina B.   | 102.***.***-41 | n***@exemplo.invalid | Auditoria Interna | EM_TRANSITO
+(6 linhas)
+
+
+========== T12 suporte legado apaga MOV-2026-0001 (esperado: DELETE 0, aviso, linha permanece, incidente na trilha) ==========
+RESET
+SET
+SET
+ usuario_da_tentativa 
+----------------------
+ usr_suporte_legado
+(1 linha)
+
+psql:scripts/05attacksimulation.sql:96: AVISO:  01000: RASTREABILIDADE: exclusao do protocolo MOV-2026-0001 bloqueada e registrada (usuario usr_suporte_legado)
+DELETE 0
+   protocolo   |                 motivo                 
+---------------+----------------------------------------
+ MOV-2026-0001 | Encaminhamento da conta para operacoes
+(1 linha)
+
+
+========== T13 suporte legado altera motivo do historico (esperado: 42501, sem UPDATE) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:107: ERRO:  42501: permissão negada para tabela movimentacoes
+
+========== T14 sessao administrativa adultera a trilha (esperado: AUDITORIA-IMUTAVEL) ==========
+RESET
+SET
+ usuario_da_tentativa 
+----------------------
+ postgres
+(1 linha)
+
+psql:scripts/05attacksimulation.sql:116: ERRO:  42501: AUDITORIA-IMUTAVEL: UPDATE na trilha e proibido (usuario postgres)
+CONTEXTO:  função PL/pgSQL fn_trilha_imutavel() linha 3 em RAISE
+
+========== T15 sessao administrativa apaga a trilha (esperado: AUDITORIA-IMUTAVEL) ==========
+RESET
+psql:scripts/05attacksimulation.sql:121: ERRO:  42501: AUDITORIA-IMUTAVEL: DELETE na trilha e proibido (usuario postgres)
+CONTEXTO:  função PL/pgSQL fn_trilha_imutavel() linha 3 em RAISE
+
+========== T16 sessao administrativa faz TRUNCATE do historico (esperado: RASTREABILIDADE) ==========
+RESET
+psql:scripts/05attacksimulation.sql:126: ERRO:  42501: RASTREABILIDADE: TRUNCATE em contas.movimentacoes e proibido (usuario postgres)
+CONTEXTO:  função PL/pgSQL fn_bloquear_truncate() linha 3 em RAISE
+ movimentacoes_preservadas 
+---------------------------
+                         5
+(1 linha)
+
+
+========== T17 auditor tenta apagar a trilha (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:133: ERRO:  42501: permissão negada para tabela trilha
+
+========== T18 operador consulta a trilha (esperado: 42501) ==========
+RESET
+SET
+psql:scripts/05attacksimulation.sql:139: ERRO:  42501: permissão negada para esquema auditoria
+LINHA 1: SELECT id, usuario_banco, operacao FROM auditoria.trilha;
+                                                 ^
+
+========== T19 operador executa remessa valida da conta 100200-7 (esperado: INSERT 1 e UPDATE 1) ==========
+RESET
+SET
+SET
+ usuario_da_tentativa 
+----------------------
+ usr_operador
+(1 linha)
+
+INSERT 0 1
+UPDATE 1
+  numero  |   status    
+----------+-------------
+ 100200-7 | EM_TRANSITO
+(1 linha)
+
+
+========== Conferencia final da bateria, de volta ao superusuario ==========
+RESET
+   protocolo   
+---------------
+ MOV-2026-0001
+ MOV-2026-0002
+ MOV-2026-0003
+ MOV-2026-0004
+ MOV-2026-0005
+(5 linhas)
+
+ eventos_na_trilha 
+-------------------
+                 3
+(1 linha)
+
+05attacksimulation.sql concluido.
