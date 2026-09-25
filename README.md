@@ -11,7 +11,7 @@ SGBD: PostgreSQL 15 ou superior. A execução deste repositório foi feita no Po
 | Campo | Informação |
 | --- | --- |
 | Nome completo | *(Cauã Bolani)* |
-| Matrícula / RA | *(preencher antes de entregar)* |
+| Matrícula / RA | *(658642)* |
 | Curso e turma | *(TADS 4-Periodo)* |
 | Disciplina | Administração de banco de dados |
 | Papel | DBA e governança |
